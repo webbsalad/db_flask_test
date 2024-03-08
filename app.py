@@ -1,18 +1,20 @@
 from flask import Flask, render_template, request, jsonify
 import psycopg2
 import psycopg2.extras
-import os
+
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 
-def get_db_connection():
-    dbname = os.environ.get('DBNAME')
-    user = os.environ.get('USER')
-    password = os.environ.get('PASSWORD')
-    host = os.environ.get('HOST')
-    port = os.environ.get('PORT')
+# Database connection parameters
+dbname = "igyewlez"
+user = "igyewlez"
+password = "TFg3xtI25QbqQUOERaKvd-yJwn3GXq47"
+host = "ziggy.db.elephantsql.com"
+port = "5432"
 
+# Establish a connection to the database
+def get_db_connection():
     conn = psycopg2.connect(
         dbname=dbname,
         user=user,
