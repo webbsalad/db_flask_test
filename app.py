@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, jsonify
 import psycopg2
 import psycopg2.extras
 
-
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 
