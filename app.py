@@ -47,7 +47,7 @@ def fetch_tasks_as_json(conn_params, task_id=None):
             cur.close()
             conn.close()
             return None
-        tasks = [tasks]  # Оборачиваем результат в список для унификации
+        tasks = [tasks]  
     else:
         cur.execute("SELECT * FROM tasks")
         tasks = cur.fetchall()
@@ -62,14 +62,19 @@ def fetch_tasks_as_json(conn_params, task_id=None):
 
 
 #########################################################
-@app.route('/tasks', methods=['GET'])
+@app.route('/tasks', methods=['GET', 'POST'])
 def get_tasks():
-    task_id = request.args.get('id')  # Получаем ID задачи из параметров запроса
-    try:
-        tasks_json = fetch_tasks_as_json(conn_params, task_id)
-        if tasks_json:
-            return Response(tasks_json, content_type='application/json; charset=utf-8')
-        else:
-            return jsonify({"error": "Task not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    if request.method == 'GET':
+        task_id = request.args.get('id')
+        try:
+            tasks_json = fetch_tasks_as_json(conn_params, task_id)
+            if tasks_json:
+                return Response(tasks_json, content_type='application/json; charset=utf-8')
+            else:
+                return jsonify({"error": "Task not found"}), 404
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        
+
+    elif request.method == 'POST':
+        return "тут будет пост запрос", 200
