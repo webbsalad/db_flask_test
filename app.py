@@ -29,9 +29,9 @@ def add_item(new_item_json):
             cursor = connection.cursor()
 
             # Пример SQL запроса для вставки нового элемента
-            sql_query = """INSERT INTO items (id, title, description, deadline, priority, status, assignees) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s);"""
-            cursor.execute(sql_query, (new_item_json['id'], new_item_json['title'], new_item_json['description'], 
+            sql_query = """INSERT INTO items (title, description, deadline, priority, status, assignees) 
+                           VALUES (%s, %s, %s, %s, %s, %s);"""
+            cursor.execute(sql_query, (new_item_json['title'], new_item_json['description'], 
                                        new_item_json['deadline'], new_item_json['priority'], new_item_json['status'], 
                                        new_item_json['assignees']))
 
