@@ -28,7 +28,6 @@ def add_item(new_item_json):
         try:
             cursor = connection.cursor()
 
-            # Пример SQL запроса для вставки нового элемента
             sql_query = """INSERT INTO items (title, description, deadline, priority, status, assignees) 
                            VALUES (%s, %s, %s, %s, %s, %s);"""
             cursor.execute(sql_query, (new_item_json['title'], new_item_json['description'], 
@@ -37,8 +36,10 @@ def add_item(new_item_json):
 
             connection.commit()
             print("Item added successfully")
+            return jsonify({"message": "Item added successfully"})
         except Error as e:
             print(f"Error while adding item to PostgreSQL: {e}")
+            return jsonify({"error": str(e)}), 500
         finally:
             if connection:
                 cursor.close()
@@ -50,7 +51,6 @@ def delete_item_by_id(item_id):
         try:
             cursor = connection.cursor()
 
-            # Пример SQL запроса для удаления элемента по id
             sql_query = "DELETE FROM items WHERE id = %s;"
             cursor.execute(sql_query, (item_id,))
 
@@ -107,14 +107,13 @@ def items():
         try:
             new_item_json = request.get_json()
             add_item(new_item_json)
-            return "Item added successfully", 200
+            return f"{new_item_json}", 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
 @app.route('/items/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
     try:
-        # Обработка удаления элемента по его id
         delete_item_by_id(item_id)
         return "Item deleted successfully", 200
     except Exception as e:
