@@ -7,10 +7,10 @@ import json
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 conn_params = {
-    'dbname' : "igyewlez",
-    'user': "igyewlez",
-    'password': "TFg3xtI25QbqQUOERaKvd-yJwn3GXq47",
-    'host': "ziggy.db.elephantsql.com",
+    'dbname' : "postgres",
+    'user': "postgres.ppoohvwxcftgaqioemzy",
+    'password': "ufnvauifaj1_",
+    'host': "aws-0-eu-central-1.pooler.supabase.com",
     'port': "5432",
 }
 
@@ -118,5 +118,4 @@ def delete_item(item_id):
         return "Item deleted successfully", 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
