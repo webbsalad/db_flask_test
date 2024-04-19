@@ -51,19 +51,13 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     order_clause = ''
     if sort_by:
         if sort_by == '-':
-            order_clause = ''
-        else:
-            order_clause = f"ORDER BY {sort_by}"
+            sort_by = 'id'  # Если сортировка не указана, сортируем по умолчанию по id
+        order_clause = f"ORDER BY {sort_by}"
 
     sql_query = f"SELECT * FROM {table_name}"
-    
     if where_clause:
         sql_query += f" WHERE {where_clause}"
-    
-    if order_clause:
-        sql_query += f" {order_clause};"
-    else:
-        sql_query += ";"
+    sql_query += f" {order_clause};"
 
     cursor.execute(sql_query, tuple(params))
     items = cursor.fetchall()
@@ -74,6 +68,7 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     connection.close()
 
     return json.dumps(items_list, ensure_ascii=False, default=str)
+
 
 
 
@@ -144,6 +139,26 @@ def handle_items(table_name):
             return f"{new_item_json}", 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+@app.route('/<string:table_name>/<int:item_id>', methods=['GET', 'DELETE'])
+def get_item(table_name, item_id):
+    if request.method == 'GET':
+        try:
+            filters = {'id': str(item_id)}
+            items_json = fetch_data_as_json(table_name, filters)
+            if items_json:
+                return Response(items_json, content_type='application/json; charset=utf-8')
+            else:
+                return jsonify({"error": f"Item with id {item_id} not found"}), 404
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    elif request.method == 'DELETE':
+        try:
+            delete_item_by_id(table_name, item_id)
+            return "Item deleted successfully", 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
 
 @app.route('/<string:table_name>/<int:item_id>', methods=['DELETE'])
 def delete_item(table_name, item_id):
