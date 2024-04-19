@@ -29,15 +29,22 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     connection.set_client_encoding('UTF8')
 
     where_clause = ''
+    params = []
     if filters:
         conditions = []
         for key, value in filters.items():
             if '*' in value:
-                value = value.replace('*', '%')
-                conditions.append(f"{key} LIKE '{value}'")
+                if value.startswith('*'):
+                    value = value.replace('*', '%') + '%'
+                    conditions.append(f"{key} ILIKE %s")
+                else:
+                    value = '%' + value.replace('*', '%')
+                    conditions.append(f"{key} ILIKE %s")
+                params.append(value)
             else:
-                conditions.append(f"{key} = '{value}'")
-        where_clause = 'WHERE ' + ' AND '.join(conditions)
+                conditions.append(f"{key} = %s")
+                params.append(value)
+        where_clause = ' AND '.join(conditions)
 
     order_clause = ''
     if sort_by:
@@ -46,9 +53,9 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
         else:
             order_clause = f"ORDER BY {sort_by}"
 
-    sql_query = f"SELECT * FROM {table_name} {where_clause} {order_clause};"
+    sql_query = f"SELECT * FROM {table_name} WHERE {where_clause} {order_clause};"
 
-    cursor.execute(sql_query)
+    cursor.execute(sql_query, tuple(params))
     items = cursor.fetchall()
     column_names = [desc[0] for desc in cursor.description]
     items_list = [dict(zip(column_names, item)) for item in items]
@@ -57,6 +64,9 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     connection.close()
 
     return json.dumps(items_list, ensure_ascii=False, default=str)
+
+
+
 
 
 def add_item(table_name, new_item_json):
