@@ -147,7 +147,7 @@ def get_item(table_name, item_id):
             filters = {'id': str(item_id)}
             items_json = fetch_data_as_json(table_name, filters)
             if items_json:
-                return Response(items_json, content_type='application/json; charset=utf-8')
+                return Response(items_json[1:-1], content_type='application/json; charset=utf-8')
             else:
                 return jsonify({"error": f"Item with id {item_id} not found"}), 404
         except Exception as e:
