@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, jsonify, Response
+from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
 from psycopg2 import Error
 import json
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
+CORS(app)
 
 conn_params = {
     'dbname': "postgres",
