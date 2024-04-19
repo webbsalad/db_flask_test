@@ -53,7 +53,15 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
         else:
             order_clause = f"ORDER BY {sort_by}"
 
-    sql_query = f"SELECT * FROM {table_name} WHERE {where_clause} {order_clause};"
+    sql_query = f"SELECT * FROM {table_name}"
+    
+    if where_clause:
+        sql_query += f" WHERE {where_clause}"
+    
+    if order_clause:
+        sql_query += f" {order_clause};"
+    else:
+        sql_query += ";"
 
     cursor.execute(sql_query, tuple(params))
     items = cursor.fetchall()
@@ -64,6 +72,7 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     connection.close()
 
     return json.dumps(items_list, ensure_ascii=False, default=str)
+
 
 
 
