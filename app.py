@@ -7,7 +7,7 @@ import json
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 conn_params = {
-    'dbname' : "postgres",
+    'dbname': "postgres",
     'user': "postgres.ppoohvwxcftgaqioemzy",
     'password': "ufnvauifaj1_",
     'host': "aws-0-eu-central-1.pooler.supabase.com",
@@ -22,35 +22,42 @@ def connect_to_db():
         print(f"Error while connecting to PostgreSQL: {e}")
         return None
 
-def fetch_data_as_json(table_name, item_id=None, sort_by=None):
+def fetch_data_as_json(table_name, filters=None, sort_by=None):
     connection = connect_to_db()
     cursor = connection.cursor()
-    
+
     connection.set_client_encoding('UTF8')
-    
-    if item_id:
-        cursor.execute(f"SELECT * FROM {table_name} WHERE id = %s", (item_id,))
-        item = cursor.fetchone()
-        if item is None:
-            cursor.close()
-            connection.close()
-            return None
-        column_names = [desc[0] for desc in cursor.description]
-        item_dict = dict(zip(column_names, item))
-        items_list = [item_dict]  
-    else:
-        if sort_by:
-            cursor.execute(f"SELECT * FROM {table_name} ORDER BY {sort_by}")
+
+    where_clause = ''
+    if filters:
+        conditions = []
+        for key, value in filters.items():
+            if '*' in value:
+                value = value.replace('*', '%')
+                conditions.append(f"{key} LIKE '{value}'")
+            else:
+                conditions.append(f"{key} = '{value}'")
+        where_clause = 'WHERE ' + ' AND '.join(conditions)
+
+    order_clause = ''
+    if sort_by:
+        if sort_by == '-':
+            order_clause = ''
         else:
-            cursor.execute(f"SELECT * FROM {table_name}")
-        items = cursor.fetchall()
-        column_names = [desc[0] for desc in cursor.description]
-        items_list = [dict(zip(column_names, item)) for item in items]
-    
+            order_clause = f"ORDER BY {sort_by}"
+
+    sql_query = f"SELECT * FROM {table_name} {where_clause} {order_clause};"
+
+    cursor.execute(sql_query)
+    items = cursor.fetchall()
+    column_names = [desc[0] for desc in cursor.description]
+    items_list = [dict(zip(column_names, item)) for item in items]
+
     cursor.close()
     connection.close()
-    
+
     return json.dumps(items_list, ensure_ascii=False, default=str)
+
 
 def add_item(table_name, new_item_json):
     connection = connect_to_db()
@@ -96,10 +103,13 @@ def delete_item_by_id(table_name, item_id):
 @app.route('/<string:table_name>', methods=['GET', 'POST'])
 def handle_items(table_name):
     if request.method == 'GET':
-        item_id = request.args.get('id')
+        filters = {}
         sort_by = request.args.get('sortBy')
+        for key, value in request.args.items():
+            if key != 'sortBy':
+                filters[key] = value
         try:
-            items_json = fetch_data_as_json(table_name, item_id, sort_by)
+            items_json = fetch_data_as_json(table_name, filters, sort_by)
             if items_json:
                 return Response(items_json, content_type='application/json; charset=utf-8')
             else:
@@ -122,5 +132,4 @@ def delete_item(table_name, item_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True)
+
