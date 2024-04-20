@@ -22,18 +22,13 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Deploy to Vercel
+      - name: Set up environment variables
         run: |
-          export DB_NAME="${{ secrets.DB_NAME }}"
-          export DB_USER="${{ secrets.DB_USER }}"
-          export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-          export DB_HOST="${{ secrets.DB_HOST }}"
-          export DB_PORT="${{ secrets.DB_PORT }}"
-          vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --prod
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
+
+      - name: Deploy to Vercel
+        run: vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --prod
