@@ -16,7 +16,7 @@ conn_params = {
     'host': os.environ.get("DB_HOST"),
     'port': os.environ.get("DB_PORT"),
 }
-
+print(conn_params)
 
 def connect_to_db():
     try:
