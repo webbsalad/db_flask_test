@@ -5,21 +5,19 @@ import psycopg2.extras
 from psycopg2 import Error
 import json
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 
 conn_params = {
-    'dbname': os.environ.get("DB_NAME"),
-    'user': os.environ.get("DB_USER"),
-    'password': os.environ.get("DB_PASSWORD"),
-    'host': os.environ.get("DB_HOST"),
-    'port': os.environ.get("DB_PORT"),
+    'dbname': "postgres",
+    'user': "postgres.ppoohvwxcftgaqioemzy",
+    'password': "ufnvauifaj1_",
+    'host': "aws-0-eu-central-1.pooler.supabase.com",
+    'port': "5432",
 }
-print(conn_params)
+
 
 def connect_to_db():
     try:
