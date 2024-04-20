@@ -31,4 +31,10 @@ jobs:
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
       - name: Deploy to Vercel
-        run: vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --prod
+        run: |
+          export DB_NAME="${{ secrets.DB_NAME }}"
+          export DB_USER="${{ secrets.DB_USER }}"
+          export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+          export DB_HOST="${{ secrets.DB_HOST }}"
+          export DB_PORT="${{ secrets.DB_PORT }}"
+          vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --prod
