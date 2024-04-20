@@ -5,6 +5,9 @@ import psycopg2.extras
 from psycopg2 import Error
 import json
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
