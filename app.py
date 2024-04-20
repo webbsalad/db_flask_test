@@ -9,7 +9,9 @@ import os
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 
-conn_params = os.getenv('DB_CONNECTION_PARAMS')
+conn_params_json = os.getenv('DB_CONNECTION_PARAMS')
+
+conn_params = json.loads(conn_params_json)
 
 def connect_to_db():
     try:
