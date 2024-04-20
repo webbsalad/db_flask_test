@@ -4,17 +4,12 @@ import psycopg2
 import psycopg2.extras
 from psycopg2 import Error
 import json
+import os
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 
-conn_params = {
-    'dbname': "postgres",
-    'user': "postgres.ppoohvwxcftgaqioemzy",
-    'password': "ufnvauifaj1_",
-    'host': "aws-0-eu-central-1.pooler.supabase.com",
-    'port': "5432",
-}
+conn_params = os.getenv('DB_CONNECTION_PARAMS')
 
 def connect_to_db():
     try:
