@@ -109,7 +109,13 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     cursor.close()
     connection.close()
 
+    # Заменяем ключ "timingslist" на "timingsList"
+    for item in items_list:
+        if 'timingslist' in item:
+            item['timingsList'] = item.pop('timingslist')
+
     return json.dumps(items_list, ensure_ascii=False, default=str)
+
 
 
 
@@ -138,7 +144,7 @@ def handle_items(table_name):
         sort_by = request.args.get('sortBy')
         for key, value in request.args.items():
             if key != 'sortBy':
-                filters[key] = value
+                filters[str(key)] = value  # Преобразуем ключ в строку
         try:
             items_json = fetch_data_as_json(table_name, filters, sort_by)
             if items_json:
@@ -154,6 +160,7 @@ def handle_items(table_name):
             return f"{new_item_json}", 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
 
 @app.route('/<string:table_name>/<int:item_id>', methods=['GET', 'DELETE'])
 def get_item(table_name, item_id):
