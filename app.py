@@ -45,7 +45,6 @@ def add_item(table_name, new_item_json):
         try:
             cursor = connection.cursor()
 
-            # Get the maximum ID and increment it by 1 for the new item
             max_id = get_max_id(table_name)
             new_item_json['id'] = max_id + 1
 
@@ -80,23 +79,23 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
             if '*' in value:
                 if value.startswith('*'):
                     value = value.replace('*', '%') + '%'
-                    conditions.append(f'"{key}" ILIKE %s')  # Используем кавычки вокруг имени столбца
+                    conditions.append(f'"{key}" ILIKE %s') 
                 else:
                     value = '%' + value.replace('*', '%')
-                    conditions.append(f'"{key}" ILIKE %s')  # Используем кавычки вокруг имени столбца
+                    conditions.append(f'"{key}" ILIKE %s') 
                 params.append(value)
             else:
-                conditions.append(f'"{key}" = %s')  # Используем кавычки вокруг имени столбца
+                conditions.append(f'"{key}" = %s') 
                 params.append(value)
         where_clause = ' AND '.join(conditions)
 
     order_clause = ''
     if sort_by:
         if sort_by == '-':
-            sort_by = 'id'  # Если сортировка не указана, сортируем по умолчанию по id
+            sort_by = 'id'  
         order_clause = f"ORDER BY {sort_by}"
 
-    sql_query = f'SELECT * FROM "{table_name}"'  # Используем кавычки вокруг имени таблицы
+    sql_query = f'SELECT * FROM "{table_name}"' 
     if where_clause:
         sql_query += f" WHERE {where_clause}"
     sql_query += f" {order_clause};"
@@ -109,7 +108,6 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     cursor.close()
     connection.close()
 
-    # Заменяем ключ "timingslist" на "timingsList"
     for item in items_list:
         if 'timingslist' in item:
             item['timingsList'] = item.pop('timingslist')
@@ -153,6 +151,7 @@ def update_item_status(table_name, item_id, status):
                 cursor.close()
                 connection.close()
 
+################################################################################################
 
 @app.route('/<string:table_name>', methods=['GET', 'POST'])
 def handle_items(table_name):
@@ -161,7 +160,7 @@ def handle_items(table_name):
         sort_by = request.args.get('sortBy')
         for key, value in request.args.items():
             if key != 'sortBy':
-                filters[str(key)] = value  # Преобразуем ключ в строку
+                filters[str(key)] = value 
         try:
             items_json = fetch_data_as_json(table_name, filters, sort_by)
             if items_json:
