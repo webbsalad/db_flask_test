@@ -80,13 +80,13 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
             if '*' in value:
                 if value.startswith('*'):
                     value = value.replace('*', '%') + '%'
-                    conditions.append(f"{key} ILIKE %s")
+                    conditions.append(f'"{key}" ILIKE %s')  # Используем кавычки вокруг имени столбца
                 else:
                     value = '%' + value.replace('*', '%')
-                    conditions.append(f"{key} ILIKE %s")
+                    conditions.append(f'"{key}" ILIKE %s')  # Используем кавычки вокруг имени столбца
                 params.append(value)
             else:
-                conditions.append(f"{key} = %s")
+                conditions.append(f'"{key}" = %s')  # Используем кавычки вокруг имени столбца
                 params.append(value)
         where_clause = ' AND '.join(conditions)
 
@@ -96,7 +96,7 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
             sort_by = 'id'  # Если сортировка не указана, сортируем по умолчанию по id
         order_clause = f"ORDER BY {sort_by}"
 
-    sql_query = f"SELECT * FROM {table_name}"
+    sql_query = f'SELECT * FROM "{table_name}"'  # Используем кавычки вокруг имени таблицы
     if where_clause:
         sql_query += f" WHERE {where_clause}"
     sql_query += f" {order_clause};"
@@ -110,6 +110,7 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     connection.close()
 
     return json.dumps(items_list, ensure_ascii=False, default=str)
+
 
 
 def delete_item_by_id(table_name, item_id):
