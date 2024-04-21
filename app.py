@@ -24,6 +24,48 @@ def connect_to_db():
         print(f"Error while connecting to PostgreSQL: {e}")
         return None
 
+def get_max_id(table_name):
+    connection = connect_to_db()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            cursor.execute(f"SELECT MAX(id) FROM {table_name};")
+            max_id = cursor.fetchone()[0]
+            return max_id if max_id else 0
+        except Error as e:
+            print(f"Error while getting max ID from PostgreSQL: {e}")
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+
+def add_item(table_name, new_item_json):
+    connection = connect_to_db()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            # Get the maximum ID and increment it by 1 for the new item
+            max_id = get_max_id(table_name)
+            new_item_json['id'] = max_id + 1
+
+            columns = ', '.join(new_item_json.keys())
+            placeholders = ', '.join(['%s'] * len(new_item_json))
+            sql_query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders});"
+
+            cursor.execute(sql_query, list(new_item_json.values()))
+
+            connection.commit()
+            print(f"Item added successfully to {table_name}")
+            return jsonify({"message": f"Item added successfully to {table_name}"})
+        except Error as e:
+            print(f"Error while adding item to PostgreSQL: {e}")
+            return jsonify({"error": str(e)}), 500
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+
 def fetch_data_as_json(table_name, filters=None, sort_by=None):
     connection = connect_to_db()
     cursor = connection.cursor()
@@ -69,34 +111,6 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
 
     return json.dumps(items_list, ensure_ascii=False, default=str)
 
-
-
-
-
-
-
-def add_item(table_name, new_item_json):
-    connection = connect_to_db()
-    if connection:
-        try:
-            cursor = connection.cursor()
-
-            columns = ', '.join(new_item_json.keys())
-            placeholders = ', '.join(['%s'] * len(new_item_json))
-            sql_query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders});"
-
-            cursor.execute(sql_query, list(new_item_json.values()))
-
-            connection.commit()
-            print(f"Item added successfully to {table_name}")
-            return jsonify({"message": f"Item added successfully to {table_name}"})
-        except Error as e:
-            print(f"Error while adding item to PostgreSQL: {e}")
-            return jsonify({"error": str(e)}), 500
-        finally:
-            if connection:
-                cursor.close()
-                connection.close()
 
 def delete_item_by_id(table_name, item_id):
     connection = connect_to_db()
