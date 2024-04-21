@@ -117,8 +117,6 @@ def fetch_data_as_json(table_name, filters=None, sort_by=None):
     return json.dumps(items_list, ensure_ascii=False, default=str)
 
 
-
-
 def delete_item_by_id(table_name, item_id):
     connection = connect_to_db()
     if connection:
@@ -136,6 +134,25 @@ def delete_item_by_id(table_name, item_id):
             if connection:
                 cursor.close()
                 connection.close()
+
+def update_item_status(table_name, item_id, status):
+    connection = connect_to_db()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            sql_query = f"UPDATE {table_name} SET status = %s WHERE id = %s;"
+            cursor.execute(sql_query, (status, item_id))
+
+            connection.commit()
+            print(f"Item status updated successfully in {table_name}")
+        except Error as e:
+            print(f"Error while updating item status in PostgreSQL: {e}")
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+
 
 @app.route('/<string:table_name>', methods=['GET', 'POST'])
 def handle_items(table_name):
@@ -189,3 +206,17 @@ def delete_item(table_name, item_id):
         return "Item deleted successfully", 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/<string:table_name>/<int:item_id>', methods=['PATCH'])
+def update_item(table_name, item_id):
+    if request.method == 'PATCH':
+        try:
+            data = request.get_json()
+            status = data.get('status')
+            if status is None:
+                return jsonify({"error": "Status field is missing in request body"}), 400
+            update_item_status(table_name, item_id, status)
+            return "Item status updated successfully", 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
