@@ -1,9 +1,12 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
 from psycopg2 import Error
 import json
+import jwt
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
@@ -16,6 +19,9 @@ conn_params = {
     'port': "5432",
 }
 
+# Секретный ключ для подписи токенов
+SECRET_KEY = 'jnfvjasdnvnsadvklnkflbnkfabfa'
+
 def connect_to_db():
     try:
         connection = psycopg2.connect(**conn_params)
@@ -23,6 +29,12 @@ def connect_to_db():
     except Error as e:
         print(f"Error while connecting to PostgreSQL: {e}")
         return None
+
+def generate_token(user_id):
+    payload = {'user_id': user_id}
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    return token
+
 
 def get_max_id(table_name):
     connection = connect_to_db()
@@ -213,9 +225,9 @@ def update_item(table_name, item_id):
         try:
             data = request.get_json()
             if not data:
-                return jsonify({"error": "Пустое тело запроса"}), 400
+                return jsonify({"error": "Empty request body"}), 400
 
-            # Извлечение всех полей из JSON-запроса и их обновление в базе данных
+            # Extract all fields from the JSON request and update them in the database
             update_fields = ", ".join([f"{key} = %s" for key in data.keys()])
             update_values = tuple(data.values())
             update_values += (item_id,)
@@ -229,10 +241,10 @@ def update_item(table_name, item_id):
                     cursor.execute(sql_query, update_values)
 
                     connection.commit()
-                    print(f"Элемент успешно обновлен в таблице {table_name}")
-                    return "Элемент успешно обновлен", 200
+                    print(f"Item updated successfully in table {table_name}")
+                    return "Item updated successfully", 200
                 except Error as e:
-                    print(f"Ошибка при обновлении элемента в PostgreSQL: {e}")
+                    print(f"Error while updating item in PostgreSQL: {e}")
                     return jsonify({"error": str(e)}), 500
                 finally:
                     if connection:
@@ -241,3 +253,130 @@ def update_item(table_name, item_id):
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+# Маршрут для регистрации нового пользователя
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    fullName = data.get('fullName')
+    email = data.get('email')
+    age = data.get('age')
+    gender = data.get('gender')
+    password = data.get('password')
+
+    # Проверка наличия всех необходимых полей
+    if not (fullName and email and age and gender and password):
+        return jsonify({'error': 'Missing fields'}), 400
+
+    # Проверка, не существует ли уже пользователь с таким email-адресом
+    connection = connect_to_db()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute("""
+                SELECT id FROM users WHERE email = %s
+            """, (email,))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                return jsonify({'error': 'User with this email already exists'}), 400
+
+            # Хеширование пароля перед сохранением в базу данных
+            hashed_password = generate_password_hash(password)
+
+            # Определение следующего доступного id
+            next_id = get_max_id("users") + 1
+
+            # Добавление пользователя в базу данных
+            cursor.execute("""
+                INSERT INTO users (id, fullName, email, age, gender, password)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (next_id, fullName, email, age, gender, hashed_password))
+            user_id = cursor.fetchone()[0]
+
+            # Создание токена
+            token = generate_token(user_id)
+
+            # Сохранение токена в таблице register
+            cursor.execute("""
+                INSERT INTO register (user_id, token)
+                VALUES (%s, %s)
+            """, (user_id, token))
+
+            connection.commit()
+
+            return jsonify({
+                'token': token,
+                'data': {
+                    'fullName': fullName,
+                    'email': email,
+                    'age': age,
+                    'gender': gender,
+                    'id': user_id
+                }
+            }), 200
+        except Error as e:
+            print(f"Error while registering user: {e}")
+            return jsonify({'error': str(e)}), 500
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+    else:
+        return jsonify({'error': 'Unable to connect to the database'}), 500
+
+
+# Маршрут для аутентификации пользователя
+@app.route('/auth', methods=['POST'])
+def auth():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    # Проверка наличия всех необходимых полей
+    if not (email and password):
+        return jsonify({'error': 'Missing fields'}), 400
+
+    connection = connect_to_db()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            # Поиск пользователя в базе данных
+            cursor.execute("""
+                SELECT id, fullName, email, age, gender, password
+                FROM users
+                WHERE email = %s
+            """, (email,))
+            user = cursor.fetchone()
+
+            if not user:
+                return jsonify({'error': 'User is not found'}), 404
+            if not check_password_hash(user[5], password):
+                return jsonify({'error': 'wrong password'}), 401
+
+            user_id, fullName, email, age, gender, _ = user
+
+            # Создание токена
+            token = generate_token(user_id)
+
+            return jsonify({
+                'token': token,
+                'data': {
+                    'id': user_id,
+                    'fullName': fullName,
+                    'email': email,
+                    'age': age,
+                    'gender': gender
+                }
+            }), 200
+        except Error as e:
+            print(f"Error while authenticating user: {e}")
+            return jsonify({'error': str(e)}), 500
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+    else:
+        return jsonify({'error': 'Unable to connect to the database'}), 500
