@@ -18,7 +18,6 @@ conn_params = {
     'port': "5432",
 }
 
-
 # Секретный ключ для подписи токенов
 SECRET_KEY = 'jnfvjasdnvnsadvklnkflbnkfabfa'
 
