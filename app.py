@@ -6,7 +6,6 @@ from psycopg2 import Error
 import json
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
-import secrets
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
@@ -18,6 +17,7 @@ conn_params = {
     'host': "aws-0-eu-central-1.pooler.supabase.com",
     'port': "5432",
 }
+
 
 # Секретный ключ для подписи токенов
 SECRET_KEY = 'jnfvjasdnvnsadvklnkflbnkfabfa'
