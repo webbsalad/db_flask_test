@@ -165,6 +165,11 @@ def update_item_status(table_name, item_id, status):
 
 ################################################################################################
 
+@app.route('/auth_me', methods=['GET', 'POST'])
+def zero():
+    return jsonify('заглушка'), 500
+
+
 @app.route('/<string:table_name>', methods=['GET', 'POST'])
 def handle_items(table_name):
     if request.method == 'GET':
