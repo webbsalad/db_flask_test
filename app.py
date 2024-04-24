@@ -332,7 +332,7 @@ def register():
 
 
 # Маршрут для аутентификации пользователя
-@app.route('/auth', methods=['POST'])
+@app.route('/auth /auth_me', methods=['POST'])
 def auth():
     data = request.get_json()
     email = data.get('email')
