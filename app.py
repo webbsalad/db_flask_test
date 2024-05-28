@@ -12,13 +12,13 @@ CORS(app)
 
 conn_params = {
     'dbname': "postgres",
-    'user': "postgres.ppoohvwxcftgaqioemzy",
-    'password': "ufnvauifaj1_",
-    'host': "aws-0-eu-central-1.pooler.supabase.com",
+    'user': "postgres.cxywrdpnsfqlylxtkrdf",
+    'password': "AMUHPlFSVqtWqBCc",
+    'host': "aws-0-eu-west-2.pooler.supabase.com",
     'port': "5432",
 }
 
-# Секретный ключ для подписи токенов
+
 SECRET_KEY = 'jnfvjasdnvnsadvklnkflbnkfabfa'
 
 def connect_to_db():
@@ -231,7 +231,6 @@ def update_item(table_name, item_id):
             if not data:
                 return jsonify({"error": "Empty request body"}), 400
 
-            # Extract all fields from the JSON request and update them in the database
             update_fields = ", ".join([f"{key} = %s" for key in data.keys()])
             update_values = tuple(data.values())
             update_values += (item_id,)
@@ -257,7 +256,6 @@ def update_item(table_name, item_id):
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-# Маршрут для регистрации нового пользователя
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -267,11 +265,9 @@ def register():
     gender = data.get('gender')
     password = data.get('password')
 
-    # Проверка наличия всех необходимых полей
     if not (fullName and email and age and gender and password):
         return jsonify({'error': 'Missing fields'}), 400
 
-    # Проверка, не существует ли уже пользователь с таким email-адресом
     connection = connect_to_db()
     if connection:
         try:
@@ -285,13 +281,10 @@ def register():
             if existing_user:
                 return jsonify({'error': 'User with this email already exists'}), 400
 
-            # Хеширование пароля перед сохранением в базу данных
             hashed_password = generate_password_hash(password)
 
-            # Определение следующего доступного id
             next_id = get_max_id("users") + 1
 
-            # Добавление пользователя в базу данных
             cursor.execute("""
                 INSERT INTO users (id, fullName, email, age, gender, password)
                 VALUES (%s, %s, %s, %s, %s, %s)
@@ -299,10 +292,8 @@ def register():
             """, (next_id, fullName, email, age, gender, hashed_password))
             user_id = cursor.fetchone()[0]
 
-            # Создание токена
             token = generate_token(user_id)
 
-            # Сохранение токена в таблице register
             cursor.execute("""
                 INSERT INTO register (user_id, token)
                 VALUES (%s, %s)
@@ -331,14 +322,12 @@ def register():
         return jsonify({'error': 'Unable to connect to the database'}), 500
 
 
-# Маршрут для аутентификации пользователя
 @app.route('/auth /auth_me', methods=['POST'])
 def auth():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
 
-    # Проверка наличия всех необходимых полей
     if not (email and password):
         return jsonify({'error': 'Missing fields'}), 400
 
@@ -347,7 +336,6 @@ def auth():
         try:
             cursor = connection.cursor()
 
-            # Поиск пользователя в базе данных
             cursor.execute("""
                 SELECT id, fullName, email, age, gender, password
                 FROM users
@@ -362,7 +350,6 @@ def auth():
 
             user_id, fullName, email, age, gender, _ = user
 
-            # Создание токена
             token = generate_token(user_id)
 
             return jsonify({
