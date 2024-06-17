@@ -6,16 +6,19 @@ from psycopg2 import Error
 import json
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 
+
+
 conn_params = {
-    'dbname': "postgres",
-    'user': "postgres.cxywrdpnsfqlylxtkrdf",
-    'password': "AMUHPlFSVqtWqBCc",
-    'host': "aws-0-eu-west-2.pooler.supabase.com",
-    'port': "5432",
+    'dbname': os.getenv('DB_NAME'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('DB_HOST'),
+    'port': os.getenv('DB_PORT')
 }
 
 
